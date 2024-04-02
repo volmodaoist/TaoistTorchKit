@@ -10,21 +10,31 @@ GPU = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 CPU = torch.device("cpu")
 
 # 任务超参数设置模块
-class ArgParser:
+class ArgParser(argparse.ArgumentParser):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super().__new__(cls)
-            cls._instance.__initialized = False
+            cls._instance.__dict__['_initialized'] = False
         return cls._instance
 
     def __init__(self):
         if self.__initialized:
             return
                     
-        self.parser = argparse.ArgumentParser()
-         
+        ''' 重要注释:
+        
+            我们希望能够直接通过成员运算访问 ArgParser.args 里面的属性，因而我们需要重写 __setter__ 转发属性访问。
+            
+            然而一旦重写了这魔术方法，那些直接使用 . 成员运算符赋值也会调用魔术方法 setter, 所以我们构造函数之中初始
+            设置也会调用我们的重写的 setter，而它访问的 self.args 此时未被创建，找不到属性继续转发，导致无限递归。
+            为此我们使用 self.__dict__直接设置几个关键属性，避免出现以上情况。
+            如无必要，请勿改写!
+        '''
+        
+        self.__dict__['parser'] = argparse.ArgumentParser()
+        
         # 通用性参数
         self.parser.add_argument("--model", default = None, type = str,              # 模型
                                 help = "The model needed for the specific task.")
@@ -141,12 +151,15 @@ class ArgParser:
         self.parser.add_argument('-dim', "--dim", default = 10, type = int,
                     help = "The dimension of latent space.")
         
-        self.args = self.parser.parse_args()
-        self.__initialized = True
+
+        self.__dict__['args'] = self.parser.parse_args()
+        self.__dict__['_initialized'] = True
+        
+
+        seed_everything(self.args.seed)
     
 
-    def parse_args(self, seed:int = None):            
-        seed_everything(seed if seed else self.args.seed)
+    def parse_args(self):
         return self.args
     
     def update_args(self, config:dict = None):
@@ -173,7 +186,7 @@ class ArgParser:
         return paths
 
     # 获取日志编写器
-    def setup_logging(self, config:dict = None):
+    def setup_logger(self, config:dict = None):
         args = self.args
         paths = self.setup_resfiles()
         
@@ -193,11 +206,16 @@ class ArgParser:
         return logger
     
     def __getattr__(self, name):
-        return getattr(self.args, name)
-   
-    def __setattr__(self, name):
-        return setattr(self.args, name) 
+        if '_initialized' in self.__dict__ and self._initialized:
+            return getattr(self.args, name)
 
+    def __setattr__(self, name, value):
+        if '_initialized' in self.__dict__ and self._initialized:
+            setattr(self.args, name, value)
+    
+    def __str__(self) -> str:
+        return str(self.args)
+    
 
 # 通用型模块
 def seed_everything(seed):
