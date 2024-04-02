@@ -35,11 +35,15 @@ class ArgParser:
                                 help = "Dataset for train/test model.")
         self.parser.add_argument("--seed", default = 3407, type = int,               # 随机数设置
                                  help = "Random seed for initializing training.")
-        self.parser.add_argument("--mode", default = 10, type = int,                  # 设置训练模型和测试模块
+        self.parser.add_argument("--mode", default = 10, type = int,                 # 设置训练模型和测试模块
                                  help = "Setting for test (0), train (1), or both (10) model, ")
         self.parser.add_argument("--device", default = GPU, type = torch.device,     # 模式:使用GPU或CPU
                                  help = "Select GPU/CPU mode.")
-        
+        self.parser.add_argument("--train-remark", default = 'NT', type = str,       # 训练模型阶段的注释
+                                 help = "Comment for training mode.")
+        self.parser.add_argument("--eval-remark", default = 'NT', type = str,        # 测试模型阶段的注释
+                                 help = "Comment for evaling mode.")      
+
         '''
         基本参数设置:
          - 主要是模型训练阶段的优化器、调度器参数,
