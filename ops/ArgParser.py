@@ -3,8 +3,7 @@ import argparse
 import numpy as np
 import os
 import random
-
-
+import logging
 
 
 GPU = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -160,8 +159,44 @@ class ArgParser:
         seed_everything(config.get('seed', self.args.seed))
         return self.args
     
+    # 设置日志文件夹
+    def setup_resfiles(self):
+        res_base_dir = './res'
+        subdirs = ['csv', 'figures', 'log', 'weight']
+        
+        paths = {}
+        for subdir in subdirs:
+            dir_path = os.path.join(res_base_dir, subdir)
+            os.makedirs(dir_path, exist_ok=True)
+            paths[subdir] = dir_path
+        
+        return paths
+
+    # 获取日志编写器
+    def setup_logging(self, config:dict = None):
+        args = self.args
+        paths = self.setup_resfiles()
+        
+        if config is not None:
+            args = argparse.Namespace(**config)
+        
+        log_dir = paths['log']
+        log_file = os.path.join(log_dir, f'{args.model}-{args.dataset}.log')
+        
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+        
+        logging.basicConfig(filename=log_file, level=logging.INFO, force=True,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
+        logger = logging.getLogger()
+        
+        return logger
+    
     def __getattr__(self, name):
         return getattr(self.args, name)
+   
+    def __setattr__(self, name):
+        return setattr(self.args, name) 
 
 
 # 通用型模块
