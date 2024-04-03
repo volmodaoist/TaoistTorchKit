@@ -1,0 +1,3 @@
+from .SimAM import SimAM
+
+

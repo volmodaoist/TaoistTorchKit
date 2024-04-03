@@ -11,6 +11,7 @@ TaoistTorchKit 包含了若干子模块，
 from . import plt
 from . import ops
 from . import dataset
+from . import modules
 
 
 import os, random, torch
