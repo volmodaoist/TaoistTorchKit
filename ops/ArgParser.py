@@ -60,7 +60,7 @@ class ArgParser(argparse.ArgumentParser):
         '''
         
         # 设置学习率
-        self.parser.add_argument("-lr", "--learning_rate", default = 0.01, type = float,
+        self.parser.add_argument("-lr", "--learning-rate", default = 0.01, type = float,
                                  help = "Epoch for train model.")
         
         # 设置学习率调度器的衰减参数，这个参数用来决定每隔多少步衰减学习率
@@ -139,9 +139,13 @@ class ArgParser(argparse.ArgumentParser):
                                  help="Attack for adversarial train/test.")
         
         # 对抗攻防任务: ALP训练阶段使用的pair 函数
-        self.parser.add_argument("-pl", "--pairloss", default = 'L2', type = str,
+        self.parser.add_argument("-pl", "--pairloss", default = "L2", type = str,
                                  help="Pairloss for adversarial logit pairing.")
          
+        # 对抗攻防任务：扰动幅度大小
+        self.parser.add_argument("--eps", default = "8/255", type = str,
+                                 help = "Epsilon for adversarail traing.")
+        
         # 分类任务: 设置分类模型需要分类的个数
         self.parser.add_argument("--num-classes", default = 10, type = int,
                     help = "The number of classes the model needs to classify.") 

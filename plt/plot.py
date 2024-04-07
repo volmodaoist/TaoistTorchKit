@@ -22,7 +22,7 @@ FMTS = (
 # 辅助函数
 def plot_figure(X, Y = None, xlabel = None, ylabel = None, legend = None, 
                 xlim = None, ylim = None, xscale = 'linear', yscale = 'linear',
-                fmts = FMTS, figsize = (3.5, 2.5), axes = None, save_name:str = 'tmp.png'):
+                fmts = FMTS, figsize = (3.5, 2.5), axes = None, title = None, save_name:str = 'tmp.png'):
     
     def set_figsize(figsize=(3.5, 2.5)):
         plt.rcParams['figure.figsize'] = figsize
@@ -46,8 +46,8 @@ def plot_figure(X, Y = None, xlabel = None, ylabel = None, legend = None,
 
     def has_one_axis(X):
         # 检查传入的数据是不是一个 numpy 数组且只有一个维度，或者X是不是一个列表，且列表元素不存在序列长度 len
-        return (X is not None) and (hasattr(X, "ndim") and X.ndim == 1) or (isinstance(X, list)
-                and not hasattr(X[0], "__len__"))
+        return (X is not None) and ( ((hasattr(X, "ndim") and X.ndim == 1) or (isinstance(X, list))) 
+                and not hasattr(X[0], "__len__") ) or (isinstance(X, range))
 
 
     X = [X] if has_one_axis(X) else X
@@ -55,7 +55,11 @@ def plot_figure(X, Y = None, xlabel = None, ylabel = None, legend = None,
     if Y is None:       
         X, Y = [[]] * len(X), X
 
-     # 我们允许X长度小于Y, 我们通过重复X来实现多个曲线共享同一个横轴，但是仅当 len(X) = 1, len(Y) > 1 这种情况是有意义的
+    # DEBUG
+    # print(f"X = {X}, X shape = {np.array(X).shape}")
+    # print(f"Y = {Y}, Y shape = {np.array(Y).shape}")
+    
+    # 我们允许X长度小于Y, 我们通过重复X来实现多个曲线共享同一个横轴，但是仅当 len(X) = 1, len(Y) > 1 这种情况是有意义的
     if len(X) != len(Y):
         X = X * len(Y)
         
@@ -66,6 +70,9 @@ def plot_figure(X, Y = None, xlabel = None, ylabel = None, legend = None,
         else:
             axes.plot(y, fmt)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
+    plt.tight_layout()
+    if title is not None:
+        plt.title(title)
     plt.savefig(save_name)
 
 
