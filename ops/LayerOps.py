@@ -14,7 +14,7 @@ def remove_module(module: nn.Module, target_module_type: type) -> nn.Module:
     return module
 
 
-def replace_A2B(module: nn.Module, source_module_type: type, target_module_creatfunc) -> nn.Module:
+def replace_moduleA2B(module: nn.Module, source_module_type: type, target_module_creatfunc) -> nn.Module:
     '''递归找出所有类型A模块，就成换成另一类型B模块
        其中 target_module_creatfunc 是一个用于创建目标模块的可调用对象，接收源模块作为输入。
     '''
@@ -23,7 +23,7 @@ def replace_A2B(module: nn.Module, source_module_type: type, target_module_creat
             target_module = target_module_creatfunc(child_module)
             setattr(module, child_name, target_module)
         else:
-            replace_A2B(child_module, source_module_type, target_module_creatfunc)
+            replace_moduleA2B(child_module, source_module_type, target_module_creatfunc)
     return module
 
 
@@ -47,4 +47,49 @@ def replace_bn2gn(module: nn.Module, num_groups: int = 32) -> nn.Module:
         num_channels = bn_module.num_features
         return nn.GroupNorm(num_groups=num_groups, num_channels=num_channels)
     
-    return replace_A2B(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d), _create_gn)
+    return replace_moduleA2B(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d), _create_gn)
+
+
+
+def get_out_channels(module):
+    ''' 递归地获取模块的输出通道数。
+    '''
+    # 直接返回模块的 out_channels 属性
+    if hasattr(module, 'out_channels'):
+        return module.out_channels
+    
+    # 若是 nn.Sequential，递归地检查最后一个模块
+    elif isinstance(module, nn.Sequential):
+        for submodule in reversed(module):
+            out_channels = get_out_channels(submodule)
+            if out_channels is not None:
+                return out_channels
+            
+    # 若是 nn.Module 模块，检查这个模块里面最后一个包含out_channels属性的模块
+    elif isinstance(module, nn.Module):
+        for _, submodule in reversed(list(module.named_children())):
+            out_channels = get_out_channels(submodule)
+            if out_channels is not None:
+                return out_channels
+    return None 
+    
+
+
+'''
+param {*} model             需要修改的模型
+param {*} target_modules    需要修改的目标模块列表
+param {*} attachment        模块的构造方法
+description: 函数会递归遍历，如果当前模块存在子模块，递归找出目标模块并在其末尾追加组件
+             具体来说，函数会在 model 里面找出 target_modules 标出的所有模块并在其末尾追加 attachment 模块
+'''
+def append_module2layer(model, target_modules, attachment):
+    for name, module in model.named_children():
+        if name in target_modules:
+            # 获取目标模块的输出通道数
+            out_channels = get_out_channels(module)
+            setattr(model, name, nn.Sequential(module, attachment(channels = out_channels)))
+        elif len(list(module.children())) > 0:
+            append_module2layer(module, target_modules, attachment)
+    return model
+
+
