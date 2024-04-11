@@ -83,11 +83,13 @@ param {*} matrix        热力图矩阵
 param {*} xlabel        横轴坐标
 param {*} ylabel        纵轴坐标
 param {*} title         热力图矩阵标题
-param {*} cmap          颜色主题，通常我们使用 magma 主题
+param {*} cmap          颜色主题，通常我们使用 magma 主题:
+                            
                             1. 'coolwarm': 冷暖色调交替的主题，适合表示正负值的差异。
                             2. 'magma': 黑紫红色调的主题，具有较高的对比度和可读性。
                             3. 'inferno': 黑橙红色调的主题，也具有较高的对比度。
                             4. 'plasma': 蓝紫橙色调的主题，颜色变化较为均匀。
+                            
 param {*} save_path     图像存储路径
 '''
 def plot_heatmap(matrix, xlabel = '', ylabel = '', title = 'Heatmap', cmap = 'viridis', save_path = 'heatmap.png'):    

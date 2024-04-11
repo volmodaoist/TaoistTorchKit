@@ -128,8 +128,7 @@ class ArgParser(argparse.ArgumentParser):
         # 可解释性任务: 模型决策过程转化变成 graph 过程之中保留每一层 topK 顶点
         self.parser.add_argument("--topk", default = 0.5, type = float,
                                  help = "The vertex retention rate of the graph extracted from CNN.")
-        
-        
+         
         # 对抗攻防任务: 对抗训练使用的攻击类型
         self.parser.add_argument("-at", "--attack-type", default=None, type=str,
                                  help="Attack for adversarial train/test.")
@@ -149,6 +148,10 @@ class ArgParser(argparse.ArgumentParser):
         # 分类任务: 设置分类模型需要分类的个数
         self.parser.add_argument("--num-classes", default = 10, type = int,
                     help = "The number of classes the model needs to classify.") 
+        
+        # 模型结构修改: 设置需要修改的 layer 编号
+        self.parser.add_argument("--layer-idx", default = 1, type = int,
+                    help = "The index of layer that needs to be modified.")
         
         
         # 重构任务: 编码解码结构的中间维度

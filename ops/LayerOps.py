@@ -87,25 +87,29 @@ def get_out_channels(module):
     
 
 
+
 '''
 param {*} model             需要修改的模型
 param {*} target_modules    需要修改的目标模块列表
 param {*} attachment        模块的构造方法
+param {*} init_weight       模型的初始参数(通常是预训练权重)
 description: 函数会递归遍历，如果当前模块存在子模块，递归找出目标模块并在其末尾追加组件
              具体来说，函数会在 model 里面找出 target_modules 标出的所有模块并在其末尾追加 attachment 模块
+             
+NOTE 本函数是一个引用修改，会对传入的model 本身做出修改，因而传入参数须是一个拷贝!!!
 '''
-def append_module2layer(model, target_modules, attachment):
+def append_module2layer(model:nn.Module, target_modules:list, attachment:nn.Module, init_weight:dict = None):
     for name, module in model.named_children():
         if name in target_modules:
             # 获取目标模块的输出通道数
             out_channels = get_out_channels(module)
-            setattr(model, name, nn.Sequential(module, attachment(channels = out_channels)))
+            attach_module = attachment(channels = out_channels)
+            if init_weight is not None:
+                attach_module.load_state_dict(init_weight)
+            setattr(model, name, nn.Sequential(module, attach_module))
         elif len(list(module.children())) > 0:
             append_module2layer(module, target_modules, attachment)
     return model
-
-
-
 
 
 
