@@ -192,25 +192,40 @@ class ArgParser(argparse.ArgumentParser):
         
         return paths
 
-    # 获取日志编写器
-    def setup_logger(self, config:dict = None):
+    def setup_logger(self, config: dict = None, verbose:bool = True):
         args = self.args
         paths = self.setup_resfiles()
-        
+
         if config is not None:
             args = argparse.Namespace(**config)
-        
+
         log_dir = paths['log']
         log_file = os.path.join(log_dir, f'{args.model}-{args.dataset}.log')
-        
+
+        # 移除所有之前配置的handlers，这是为了避免多进程情况之下重复日志输出
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
-        
-        logging.basicConfig(filename=log_file, level=logging.INFO, force=True,
-                            format='%(asctime)s - %(levelname)s - %(message)s')
+
+        # 获取logger并且设置日志级别
         logger = logging.getLogger()
-        
+        logger.setLevel(logging.INFO)
+
+        def _handler(logger, level, to_filepath = None):
+            if to_filepath is not None:
+                handler = logging.FileHandler(to_filepath)
+            else:
+                handler = logging.StreamHandler()
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            handler.setLevel(level)
+            logger.addHandler(handler)
+            
+        # 创建文件处理器来将日志信息写入文件，同时如何开启verbose则将日志打印终端
+        _handler(logger, logging.INFO, to_filepath = log_file)
+        _handler(logger, logging.INFO, to_filepath = None) if verbose else None
+
         return logger
+
     
     def __getattr__(self, name):
         if '_initialized' in self.__dict__ and self._initialized:
