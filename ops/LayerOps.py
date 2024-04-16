@@ -4,10 +4,8 @@ import torch.nn as nn
 
 '''
     移除模块 remove_module
-        案例:  remove_bn 主要用于差分隐私
     
     替换模块 replace_module
-        案例:  replace_bn2gn 主要用于差分隐私
             
     增加模块 append_module2layer
     
