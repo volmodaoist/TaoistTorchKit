@@ -29,7 +29,8 @@ class NonLocalDenoise(nn.Module):
             
         g_x = x.view(n, c, -1)
         f = torch.matmul(theta_x.permute(0, 2, 1), phi_x)
-        if self.softmax:
+        
+        if self.softmax is True:
             f = F.softmax(f, dim = -1)
             
         y = torch.matmul(f, g_x.permute(0, 2, 1))

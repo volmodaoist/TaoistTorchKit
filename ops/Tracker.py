@@ -1,6 +1,7 @@
 import torch 
 import torch.nn as nn
 
+import os
 import copy as cp
 
 from torchmetrics.metric import Metric
@@ -84,9 +85,9 @@ class Tracker:
     def compute_all(self):
         return self.tracker.compute_all()
     
-    def checkpoint(self, filename):
+    def checkpoint(self, filename,  persistent = True):
         res = {'Track': self.compute_all()}
-        if self.model and self.loss_fn  and self.optimizer:
+        if self.model and self.loss_fn and self.optimizer:
             res = {
                 'model': self.model,
                 'best_model_state': self.best_model_state,
@@ -94,10 +95,16 @@ class Tracker:
                 **res
             }
         
-        torch.save(res, filename)
-        return res
-        
-
+        if persistent is True:
+            torch.save(res, filename)
+            
+        return res    
+    
+    # 如果已有存储点，使用mkey 作为关键字合并当前结合存储点
+    def merge_checkpoint(self, filename, mkey):
+        return _merge_checkpoint(self.checkpoint(filename, persistent = False), mkey, filename) 
+    
+    
 
 class MultiTracker:
     def __init__(self, metrics, prefix = None, postfix = None, 
@@ -165,7 +172,7 @@ class MultiTracker:
         return [tk.compute_all() for tk in self.tracker]
     
     
-    def checkpoint(self, filename):
+    def checkpoint(self, filename, persistent = True):
         res = {'Track': self.compute_all()}
         if self.model and self.loss_fn  and self.optimizer:
             res = {
@@ -175,6 +182,25 @@ class MultiTracker:
                 'optimizer_state': self.optimizer.state_dict(),
                 **res
             }
-        
-        torch.save(res, filename)
+           
+        if persistent is True:
+            torch.save(res, filename)
+            
         return res
+
+    # 如果已有存储点，使用mkey 作为关键字合并当前结合存储点
+    def merge_checkpoint(self, filename, mkey):
+        return _merge_checkpoint(self.checkpoint(filename, persistent = False), mkey, filename) 
+        
+    
+
+def _merge_checkpoint(checkpoint, mkey, filename):
+    if not os.path.exists(filename):
+        merged_res = {mkey: checkpoint}
+    else:
+        merged_res = torch.load(filename)
+        merged_res[mkey] = checkpoint
+    
+    torch.save(merged_res, filename)
+    return merged_res 
+    
