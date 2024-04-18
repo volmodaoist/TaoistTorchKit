@@ -63,10 +63,10 @@ class Tracker:
     
     def compute(self, scalar = 1, return_log = False):
         lk = 'RunningLoss'
-        res = self.tracker.compute().items()
+        res = self.tracker.compute()
         
         if return_log:
-            res2str = (f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f"")\
+            res2str = f"{lk}: {res[lk]:.4f}, "\
                     + ", ".join([f"{k}: {v * scalar:.2f}{str('%') if scalar == 100 else str()}" 
                                 for k, v in res.items() if k != lk and v.numel() == 1])
             respair = (res, res2str)
