@@ -63,11 +63,11 @@ class Tracker:
     
     def compute(self, scalar = 1, return_log = False):
         lk = 'RunningLoss'
-        res = {k: v.item() for k,v in self.tracker.compute().items()}
+        res = self.tracker.compute().items()
         
         if return_log:
-            res2str = f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f""\
-                    + ", ".join([f"{k}: {v.item() * scalar:.2f}{str('%') if scalar == 100 else str()}" 
+            res2str = (f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f"")\
+                    + ", ".join([f"{k}: {v * scalar:.2f}{str('%') if scalar == 100 else str()}" 
                                 for k, v in res.items() if k != lk and v.numel() == 1])
             respair = (res, res2str)
         
@@ -156,12 +156,12 @@ class MultiTracker:
     
     def compute(self, scalar = 1, return_log = False):
         lk = 'RunningLoss'
-        results, respairs = [{k:v.item() for k,v in tk.compute().items()} for tk in self.tracker], []
+        results, respairs = [tk.compute() for tk in self.tracker], []
         
         if return_log:
             for res in results:
-                res2str = f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f""\
-                        + ", ".join([f"{k}: {v.item() * scalar:.2f}{str('%') if scalar == 100 else str()}" 
+                res2str = (f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f"")\
+                        + ", ".join([f"{k}: {v * scalar:.2f}{str('%') if scalar == 100 else str()}" 
                                     for k, v in res.items() if k != lk and v.numel() == 1])
                 respairs += [(res, res2str)]
         
