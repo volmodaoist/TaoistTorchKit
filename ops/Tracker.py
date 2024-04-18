@@ -63,11 +63,11 @@ class Tracker:
     
     def compute(self, scalar = 1, return_log = False):
         lk = 'RunningLoss'
-        res = self.tracker.compute()
+        res = {k: v.item() for k,v in self.tracker.compute().items()}
         
         if return_log:
-            res2str = f"{lk}: {res[lk]:.4f}, "\
-                    + ", ".join([f"{k}: {v * scalar:.2f}{str('%') if scalar == 100 else str()}" 
+            res2str = f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f""\
+                    + ", ".join([f"{k}: {v.item() * scalar:.2f}{str('%') if scalar == 100 else str()}" 
                                 for k, v in res.items() if k != lk and v.numel() == 1])
             respair = (res, res2str)
         
@@ -85,7 +85,7 @@ class Tracker:
     def compute_all(self):
         return self.tracker.compute_all()
     
-    def checkpoint(self, filename,  persistent = True):
+    def checkpoint(self, filename = None,  persistent = True):
         res = {'Track': self.compute_all()}
         if self.model and self.loss_fn and self.optimizer:
             res = {
@@ -95,14 +95,14 @@ class Tracker:
                 **res
             }
         
-        if persistent is True:
+        if persistent and filename:
             torch.save(res, filename)
             
         return res    
     
     # 如果已有存储点，使用mkey 作为关键字合并当前结合存储点
     def merge_checkpoint(self, filename, mkey):
-        return _merge_checkpoint(self.checkpoint(filename, persistent = False), mkey, filename) 
+        return _merge_checkpoint(self.checkpoint(persistent = False), mkey, filename) 
     
     
 
@@ -156,12 +156,12 @@ class MultiTracker:
     
     def compute(self, scalar = 1, return_log = False):
         lk = 'RunningLoss'
-        results, respairs = [tk.compute() for tk in self.tracker], []
+        results, respairs = [{k:v.item() for k,v in tk.compute().items()} for tk in self.tracker], []
         
         if return_log:
             for res in results:
-                res2str = f"{lk}: {res[lk]:.4f}, "\
-                        + ", ".join([f"{k}: {v * scalar:.2f}{str('%') if scalar == 100 else str()}" 
+                res2str = f"{lk}: {res[lk]:.4f}, " if self.loss_fn else f""\
+                        + ", ".join([f"{k}: {v.item() * scalar:.2f}{str('%') if scalar == 100 else str()}" 
                                     for k, v in res.items() if k != lk and v.numel() == 1])
                 respairs += [(res, res2str)]
         
@@ -172,7 +172,7 @@ class MultiTracker:
         return [tk.compute_all() for tk in self.tracker]
     
     
-    def checkpoint(self, filename, persistent = True):
+    def checkpoint(self, filename = None, persistent = True):
         res = {'Track': self.compute_all()}
         if self.model and self.loss_fn  and self.optimizer:
             res = {
@@ -183,14 +183,14 @@ class MultiTracker:
                 **res
             }
            
-        if persistent is True:
+        if persistent and filename:
             torch.save(res, filename)
             
         return res
 
     # 如果已有存储点，使用mkey 作为关键字合并当前结合存储点
     def merge_checkpoint(self, filename, mkey):
-        return _merge_checkpoint(self.checkpoint(filename, persistent = False), mkey, filename) 
+        return _merge_checkpoint(self.checkpoint(persistent = False), mkey, filename) 
         
     
 

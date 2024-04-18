@@ -192,7 +192,7 @@ class ArgParser(argparse.ArgumentParser):
         
         return paths
 
-    def setup_logger(self, config: dict = None, verbose:bool = True):
+    def setup_logger(self, config: dict = None, verbose:bool = True, log_fname:str = None):
         args = self.args
         paths = self.setup_resfiles()
 
@@ -200,7 +200,7 @@ class ArgParser(argparse.ArgumentParser):
             args = argparse.Namespace(**config)
 
         log_dir = paths['log']
-        log_file = os.path.join(log_dir, f'{args.model}-{args.dataset}.log')
+        log_file = os.path.join(log_dir, f'{log_fname}.log' if log_fname else f'{args.model}-{args.dataset}.log')
 
         # 移除所有之前配置的handlers，这是为了避免多进程情况之下重复日志输出
         for handler in logging.root.handlers[:]:
