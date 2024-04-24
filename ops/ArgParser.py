@@ -141,9 +141,13 @@ class ArgParser(argparse.ArgumentParser):
         self.parser.add_argument("-pl", "--pairloss", default = "L2", type = str,
                                  help="Pairloss for adversarial logit pairing.")
          
-        # 对抗攻防任务：扰动幅度大小
+        # 对抗攻防任务: 扰动幅度大小
         self.parser.add_argument("--eps", default = "8/255", type = str,
                                  help = "Epsilon for adversarail traing.")
+        
+        # 对抗训练任务: 损失函数的权重系数
+        self.parser.add_argument("--alpha", default = 0.5, type = float, 
+                                 help = "Coefficient for adjusting loss term.")
         
         # 分类任务: 设置分类模型需要分类的个数
         self.parser.add_argument("--num-classes", default = 10, type = int,
