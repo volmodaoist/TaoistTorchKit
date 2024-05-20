@@ -34,6 +34,7 @@ class DataCLS(DataBase):
             'cifar10': lambda *args, **kwargs: datasets.CIFAR10(*args, **kwargs),
             'cifar100': lambda *args, **kwargs: datasets.CIFAR100(*args, **kwargs),
             
+            'svhn': lambda *args, **kwargs: datasets.SVHN(split = determine_split(kwargs), *args, **kwargs), 
             'stl10': lambda *args, **kwargs: datasets.STL10(split = determine_split(kwargs), *args, **kwargs),
             'flowers102': lambda *args, **kwargs: datasets.Flowers102(split = determine_split(kwargs), *args, **kwargs),
         }
