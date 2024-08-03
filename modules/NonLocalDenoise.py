@@ -18,7 +18,7 @@ class NonLocalDenoise(nn.Module):
         # 沿着通道维度进行嵌入        
         self.embed_channels = channels // 2 if embed else channels 
         self.theta = nn.Conv2d(channels, self.embed_channels, kernel_size = 1, stride = 1, bias=False) if embed else nn.Identity()
-        self.phi = nn.Conv2d(channels, self.embed_channels, kernel_size = 1, stride = 1, bias=False) if embed else nn.Identity()
+        self.phi   = nn.Conv2d(channels, self.embed_channels, kernel_size = 1, stride = 1, bias=False) if embed else nn.Identity()
         
             
     def forward(self, x):
