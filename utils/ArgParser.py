@@ -66,7 +66,7 @@ class ArgParser:
                             help = "Used to decide how much the learning rate decays each time.")
         self.parser.add_argument("--batch-size", default = 128, type = int,
                                  help = "Batch size for train/test model.")
-        self.parser.add_argument("--num-workers", default = 4, type = int,
+        self.parser.add_argument("--num-workers", default = 8, type = int,
                             help = "Number of threads to loading dataset.")
         self.parser.add_argument("--epochs", default = 10, type = int,
                                  help = "Epoch for train model.")

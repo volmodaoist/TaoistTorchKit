@@ -8,7 +8,7 @@ from torchvision.transforms import Compose, Resize, ToTensor, Normalize
 
 
     
-class ImageTensorDataset(Dataset):
+class ImageFolderDataset(Dataset):
     def __init__(self, image_paths, labels, transform=None):
         self.image_paths = image_paths
         self.labels = labels
@@ -32,33 +32,29 @@ class ImageDataModule:
                  batch_size = 32, 
                  valid_split = 0.1, 
                  test_split = 0.1, 
+                 num_workers = 8,
                  shuffle = True, 
                  random_seed =  42):
         self.image_paths = np.array(image_paths)
         self.labels = np.array(labels)
         
-
         self.batch_size = batch_size
         self.valid_split = valid_split
         self.test_split = test_split
+        self.num_workers = num_workers
         self.shuffle = shuffle
         self.random_seed = random_seed
         
-        # 方法名称前面带有单行下划线代表这是一个私有方法约定
         self._transform(input_size)
         self._prepare_dataloaders()
 
     # 数据预处理的部分需要根据具体的任务进行修改
-    def _transform(self, input_size = (None, 3, 224, 224)):
+    def _transform(self, input_size = (None, 3, 32, 32)):
         _, c, h, w = input_size
-        self.transform = Compose([
-            Resize((h, w)),
-            ToTensor(),
-            Normalize(
-                (0.48145466, 0.4578275, 0.40821073), 
-                (0.26862954, 0.26130258, 0.27577711)
-            ),
-        ])
+        trans =  [Resize((h, w)), ToTensor()]
+        trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
+                            (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+        self.transform = Compose(trans)
         
 
     def _prepare_dataloaders(self):
@@ -75,13 +71,13 @@ class ImageDataModule:
         valid_indices = indices[test_split_idx:test_split_idx + valid_split_idx]
         train_indices = indices[test_split_idx + valid_split_idx:]
 
-        self.train_set = ImageTensorDataset(self.image_paths[train_indices], self.labels[train_indices], self.transform)
-        self.valid_set = ImageTensorDataset(self.image_paths[valid_indices], self.labels[valid_indices], self.transform)
-        self.test_set = ImageTensorDataset(self.image_paths[test_indices], self.labels[test_indices], self.transform)
+        self.train_set = ImageFolderDataset(self.image_paths[train_indices], self.labels[train_indices], self.transform)
+        self.valid_set = ImageFolderDataset(self.image_paths[valid_indices], self.labels[valid_indices], self.transform)
+        self.test_set = ImageFolderDataset(self.image_paths[test_indices], self.labels[test_indices], self.transform)
         
-        self.train_loader = DataLoader(self.train_set, batch_size=self.batch_size, shuffle=True)
-        self.valid_loader = DataLoader(self.valid_set, batch_size=self.batch_size, shuffle=False)
-        self.test_loader = DataLoader(self.test_set,  batch_size=self.batch_size, shuffle=False)
+        self.train_loader = DataLoader(self.train_set, batch_size=self.batch_size, num_workers = self.num_workers, shuffle=True)
+        self.valid_loader = DataLoader(self.valid_set, batch_size=self.batch_size,num_workers = self.num_workers,  shuffle=False)
+        self.test_loader = DataLoader(self.test_set,  batch_size=self.batch_size, num_workers = self.num_workers, shuffle=False)
 
     def getTrans(self):
         return self.transform
@@ -96,6 +92,7 @@ class ImageDataModule:
 from torchvision import datasets
 from torch.utils.data import ConcatDataset, random_split
 
+
 class ImageTensorSubset(Dataset):
     def __init__(self, subset, transform=None):
         self.subset = subset
@@ -105,25 +102,38 @@ class ImageTensorSubset(Dataset):
         return len(self.subset) 
 
     def __getitem__(self, idx):
-        x, y = self.subset[idx]
+        image, label = self.subset[idx]
         if self.transform:
-            x = self.transform(x)
-        return x, y
+            image = self.transform(image)
+        return image, label
     
 class ImageToyData:
     def __init__(self, dataset, 
                        root_path = '/home/public-datasets', 
                        input_size = (None, 3, 32, 32), 
-                       batch_size = 32, 
+                       batch_size = 32,
+                       num_workers = 8,
                        val_ratio = 0.1, test_ratio = 0.1):
         self.dataset = dataset 
+        self.root_path = root_path
+        
         self.input_size = input_size
         self.batch_size = batch_size
+        self.num_workers = num_workers
+        
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
-        self.root_path = root_path
+        
+        self._transform(input_size)
         self.raw_data = self._get_raw_data()
 
+    def _transform(self, input_size = (None, 3, 32, 32)):
+        _, c, h, w = input_size
+        trans =  [Resize((h, w)), ToTensor()]
+        trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
+                            (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+        self.transform = Compose(trans)
+        
     def _get_raw_data(self):
         determine_split = lambda kwargs: 'train' if kwargs.pop('train', True) else 'test'
         
@@ -151,19 +161,22 @@ class ImageToyData:
         total_size = len(self.raw_data)
         train_ratio = 1 - self.val_ratio - self.test_ratio
         train_size = int(total_size * train_ratio)
-        val_size = int(total_size * self.val_ratio)
-        test_size = total_size - train_size - val_size
+        valid_size   = int(total_size * self.val_ratio)
+        test_size  = total_size - train_size - valid_size
         
-        train_data, val_data, test_data = random_split(self.raw_data, [train_size, val_size, test_size])
+        train_data, valid_data, test_data = random_split(self.raw_data, [train_size, valid_size, test_size])
         
-        self.train_set = train_data
-        self.valid_set = val_data
-        self.test_set = test_data
+        self.train_set = ImageTensorSubset(test_data, self.transform)
+        self.valid_set = ImageTensorSubset(valid_data, self.transform)
+        self.test_set = ImageTensorSubset(train_data, self.transform)
+        
 
+        self.train_loader = DataLoader(self.train_set, batch_size=self.batch_size, num_workers = self.num_workers, shuffle=True)
+        self.valid_loader = DataLoader(self.valid_set, batch_size=self.batch_size, num_workers = self.num_workers, shuffle=False)
+        self.test_loader = DataLoader(self.test_set,  batch_size=self.batch_size, num_workers = self.num_workers, shuffle=False)
     
 
-    
-    
+
     
 '''
 请按下列方式组织管理数据集文件:
@@ -204,7 +217,3 @@ def _load_caltech_256(root):
         dataset.targets = [s[1] for s in dataset.samples]
     
     return dataset
-
-
-if __name__ == '__main__':
-    pass

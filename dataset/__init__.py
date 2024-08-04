@@ -1,5 +1,5 @@
 from .ImageData import (
-    ImageData, 
+    ImageFolderDataset,
     ImageDataModule, 
     ImageToyData, 
     ImageTensorSubset

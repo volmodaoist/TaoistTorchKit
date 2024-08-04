@@ -8,7 +8,7 @@ from torchmetrics.metric import Metric
 from torchmetrics import MetricTracker
 from torchmetrics import MetricCollection
 
-from torchmetrics import (Accuracy, Precision, Recall, F1Score, 
+from torchmetrics import (Accuracy, Precision, Recall, F1Score, AUROC,
                           MeanSquaredError, 
                           MeanAbsoluteError)
 
@@ -36,16 +36,18 @@ class Tracker:
     def increment(self):
         self.tracker.increment()
         
-    def update(self, preds, labels):
-        self.tracker.update(preds, labels)
+    def update(self, preds, reals):
+        self.tracker.update(preds, reals)
         
-    def compute(self):
+    def compute(self, preds = None, reals = None):
+        if preds is not None and reals is not None:
+            self.update(preds, reals)
         return self.tracker.compute()
     
     def compute_all(self):
         return self.tracker.compute_all()
     
-    def check_stop(self, epoch, val_loss):
+    def check_one_epoch(self, epoch, val_loss, preds = None, reals = None):
         score = -val_loss
         if score <= self.best_score - self.delta:
             if epoch - self.best_epoch > self.patience:
@@ -54,6 +56,9 @@ class Tracker:
             self.best_score = score
             self.best_epoch = epoch
             self.update_best(epoch, val_loss)
+        
+        return self.compute(preds, reals)
+        
 
     def update_best(self, epoch, val_loss):
         self.best_epoch = epoch
@@ -70,10 +75,12 @@ class Tracker:
             if num_classes is None:
                 warnings.warn("num_classes not specified; defaulting to 10.")
                 num_classes = 10
-            metrics = {'Acc': Accuracy(num_classes=num_classes, average='macro', task = task_type),
-                       'F1':  F1Score(num_classes=num_classes, average='macro', task = task_type),
-                       'P':   Precision(num_classes=num_classes, average='macro', task = task_type),
-                       'Recall': Recall(num_classes=num_classes, average='macro', task = task_type)}
+            metrics = {'Acc': Accuracy(num_classes=num_classes, task = task_type),
+                       'F1':  F1Score(num_classes=num_classes, task = task_type),
+                       'P':   Precision(num_classes=num_classes, task = task_type),
+                       'Recall': Recall(num_classes=num_classes, task = task_type),
+                       "AUROC": AUROC(num_classes=num_classes, task = task_type)}
+                        
         elif task_type == 'rec':
             metrics = {'MAE': MeanAbsoluteError(),
                        'RMSE': MeanSquaredError(squared=False),

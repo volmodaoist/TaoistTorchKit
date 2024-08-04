@@ -9,12 +9,13 @@ TaoistTorchKit 包含了若干子模块，
 '''
 
 from . import plt
-from . import ops
+from . import utils
+from . import light
 from . import dataset
 from . import modules
 
 
-import os, random, torch
-DATASET_PATH = '/home/public-datasets'
-GPU = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-CPU = torch.device("cpu")
+# import os, random, torch
+# DATASET_PATH = '/home/public-datasets'
+# GPU = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+# CPU = torch.device("cpu")

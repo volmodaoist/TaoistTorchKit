@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 import os
+import time
 import random
 import platform
-     
+
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import default_collate
 
@@ -69,27 +70,29 @@ class TrainTools:
         opt = optimizer_mapping[nick_name]
         if nick_name != 'sgd':
             return opt(parameters, lr=lr, weight_decay=weight_decay)
+
         return opt(parameters, lr=lr, weight_decay=weight_decay, momentum=kwargs.get('momentum', 0.9))
 
+    @staticmethod
+    def train_eval_time(func):
+        # 提供一个用于包装训练函数的装饰器
+        def wrapper(self, *args, **kwargs):
+            self.train()
+            torch.set_grad_enabled(True)
+            start_time = time.time()
 
+            result = func(self, *args, **kwargs)
+
+            torch.set_grad_enabled(False)
+            self.eval()
+            elapsed_time = time.time() - start_time
+
+            # 返回原始结果加上运行时间
+            return (*result, elapsed_time)         
+        return wrapper
 
     @staticmethod
-    def seed_everything(seed):
-        '''
-        description: Sets the seed for reproducibility across random number generators.
-        example: 
-            >>> TrainTools.seed_everything(42)
-        '''
-        os.environ['PYTHONHASHSEED'] = str(seed)
-        random.seed(seed)
-        np.random.seed(seed)
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
-            torch.backends.cudnn.deterministic = True
-
-    @staticmethod
-    def server_details(verbose=True):
+    def get_server_details(verbose=True):
         '''
         description: Prints and returns details about the current computing platform.
         example: 
@@ -114,7 +117,6 @@ class TrainTools:
             print(description)
         
         return description
-
 
 
 
@@ -146,3 +148,18 @@ def lr_scheduler_step(*lr_schedulers):
     '''
     for scheduler in lr_schedulers:
         scheduler.step()
+        
+
+def seed_everything(seed):
+    '''
+    description: Sets the seed for reproducibility across random number generators.
+    example: 
+        >>> TrainTools.seed_everything(42)
+    '''
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
