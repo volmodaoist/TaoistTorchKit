@@ -15,10 +15,11 @@ from utils import (
 
 # 图像分类器模版，这个模版尚未支持对抗训练
 class Classifier(nn.Module):
-    def __init__(self, model, dataModule):
+    def __init__(self, model, dataModule, data_parser = lambda x: (x,)):
         super().__init__()
         self.model = model
         self.dataM = dataModule
+        self.data_parser = data_parser
         
         if torch.cuda.is_available():
             self.device = torch.device('cuda')
@@ -29,7 +30,7 @@ class Classifier(nn.Module):
              
                     
     def forward(self, x):
-        return self.model(x)
+        return self.model(*self.data_parser(x))
 
     def configure_opt(self, args):
         self.loss_fn = TrainTools.get_lossfn(args.loss_func)
@@ -89,5 +90,4 @@ class Classifier(nn.Module):
                 
     
   
-
     
