@@ -125,7 +125,7 @@ class ImageToyData:
         self.test_ratio = test_ratio
         
         self._transform(input_size)
-        self.raw_data = self._get_raw_data()
+        self._get_raw_data()
 
     def _transform(self, input_size = (None, 3, 32, 32)):
         _, c, h, w = input_size
