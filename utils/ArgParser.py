@@ -38,18 +38,27 @@ class ArgParser:
                                  help = "Select Train/Test mode")
         
         # 针对分类任务的特定参数
-        self.parser.add_argument("-aug", "--aug-mask", default="000000", type=str,   # 数据增强的方案掩码
-                                 help="Mask used to specify data augmentation")
-        self.parser.add_argument("-at", "--attack-type", default=None, type=str,     # 对抗训练使用的攻击类型
-                                 help="Attack for adversarial train/test.")
-        self.parser.add_argument("-an", "--attack-norm", default=None, type=str,     # 对抗训练使用的攻击约束
-                                 help="Attack for adversarial train/test.")
-        self.parser.add_argument("--num-classes", default = 10, type = int,          # 分类需要区分的类别个数
-                    help = "The number of classes the model needs to classify.") 
-        self.parser.add_argument('-dim', "--dim", default = 10, type = int,          # 编码器的中间维度
-                    help = "The dimension of latent space.")
-       
-    
+        self.parser.add_argument("-aug", "--aug-mask", default="000000", type=str,
+                                 help="Mask used to specify data augmentation")     # 数据增强的方案掩码
+        self.parser.add_argument("-at", "--attack-type", default=None, type=str,
+                                 help="Attack for adversarial train/test.")         # 对抗训练使用的攻击类型
+        self.parser.add_argument("-an", "--attack-norm", default=None, type=str,
+                                 help="Attack for adversarial train/test.")         # 对抗训练使用的攻击约束
+        self.parser.add_argument("-ag", "--aggr", default = "gcn", type=str, 
+                                 help = "Aggregate function of GNN.")               # 聚合函数
+        self.parser.add_argument("--num-classes", default = 10, type = int,          
+                                 help = "The number of classes for classifier.")    # 分类需要区分的类别个数
+        self.parser.add_argument("--dim", default = 10, type = int,
+                                 help = "The dimension of latent space.")           # 编码器的中间维度
+        self.parser.add_argument("--gnn", default = "gcn", type=str, 
+                                 help = "Auxiliary GNN model.")                     # 辅助其它任务的图神经网络
+        self.parser.add_argument("--backbone", default = None, type = str,                           
+                                 help = "The backbone model for specific task.")    # 特定任务的骨干网络
+        self.parser.add_argument("--topk", default = None, type = float,                           
+                                 help = "Topk for something e.g. dataset/acc.")     # 选取 TopK 排名的某物
+        self.parser.add_argument("--mark", default = 1, type = int,                           
+                                 help = "Version Mark for something.")              # 选取某物的版本号
+     
 
         # 训练模型的核心模块+基本参数: 损失函数/优化器/早停; 学习率/批度/代际/轮次/激活函数
         self.parser.add_argument("--loss-func", default=None, type=str,

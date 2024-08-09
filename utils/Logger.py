@@ -25,13 +25,19 @@ class Logger:
 
         # 根据任务类型定义不同的字符串模版
         templates = {
-            'multiclass': ('Round = {runId}, BestEpoch = {best_epoch:02}, '
-                    'Acc = {Acc:.4f}, F1 = {F1:.4f}, P = {P:.4f}, Recall = {Recall:.4f}, AUROC = {AUROC:.4f}, '
-                    'Time = {sum_time:.2f} s'),
-            'rec': ('Round = {runId}, BestEpoch = {best_epoch:02}, '
-                    'MAE = {MAE:.4f}, RMSE = {RMSE:.4f}, NMAE = {NMAE:.4f}, NRMSE = {NRMSE:.4f}, '
-                    'Acc@1 = {Acc1:.4f}, Acc@5 = {Acc5:.4f}, Acc@10 = {Acc10:.4f}, '
-                    'Time = {sum_time:.2f}s')
+            # 多分类任务模版
+            'multiclass': ('Round: {runId}, BestEpoch: {best_epoch:02}, '
+                            'Acc: {Acc:.4f}, F1: {F1:.4f}, P: {P:.4f}, Recall: {Recall:.4f}, AUROC: {AUROC:.4f}, '
+                            'Time: {sum_time:.2f} s'),
+            # 较为困难级的多分类模版
+            'multiclass-hard': ('Round: {runId}, BestEpoch: {best_epoch:02}, '
+                                'Acc1: {Acc1:.4f}, Acc3: {Acc3:.4f}, Acc5: {Acc5:.4f}, AUROC: {AUROC:.4f}, '
+                                'Time: {sum_time:.2f} s'),
+            # 推荐系统任务模版
+            'rec': ('Round: {runId}, BestEpoch: {best_epoch:02}, '
+                    'MAE: {MAE:.4f}, RMSE: {RMSE:.4f}, NMAE: {NMAE:.4f}, NRMSE: {NRMSE:.4f}, '
+                    'Acc1: {Acc1:.4f}, Acc5: {Acc5:.4f}, Acc10: {Acc10:.4f}, '
+                    'Time: {sum_time:.2f} s')
         }
 
         if task_type not in templates:
@@ -63,7 +69,7 @@ class Logger:
 
     def print_epoch_results(self, runId, tracker, results, sum_time, epoch, epochs, epoch_loss):
         msg = self.base_msg(runId, tracker, results, sum_time)
-        epoch_msg = f"epoch=[{epoch + 1}/{epochs}], {msg}, vLoss={epoch_loss:.4f}"
+        epoch_msg = f"epoch=[{epoch + 1:02}/{epochs}], {msg}, vLoss={epoch_loss:.4f}"
         self.logger.info(epoch_msg)
 
     def info(self, msg):
