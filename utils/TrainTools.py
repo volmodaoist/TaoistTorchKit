@@ -90,6 +90,14 @@ class TrainTools:
             # 返回原始结果加上运行时间
             return (*result, elapsed_time)         
         return wrapper
+    
+    @staticmethod
+    def adv_attack(func):
+        pass
+    
+    @staticmethod
+    def adv_train(func):
+        pass
 
     @staticmethod
     def get_server_details(verbose=True):

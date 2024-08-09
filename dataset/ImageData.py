@@ -30,9 +30,9 @@ class ImageDataModule:
     def __init__(self, image_paths, labels,
                  input_size = (None, 3, 32, 32), 
                  batch_size = 32, 
-                 valid_split = 0.1, 
-                 test_split = 0.1, 
                  num_workers = 8,
+                 trans = None,
+                 valid_split = 0.1, test_split = 0.1, 
                  shuffle = True, 
                  random_seed =  42):
         self.image_paths = np.array(image_paths)
@@ -42,18 +42,21 @@ class ImageDataModule:
         self.valid_split = valid_split
         self.test_split = test_split
         self.num_workers = num_workers
+        self.transform = None
         self.shuffle = shuffle
         self.random_seed = random_seed
         
-        self._transform(input_size)
+        self._transform(input_size, trans)
         self._prepare_dataloaders()
 
     # 数据预处理的部分需要根据具体的任务进行修改
-    def _transform(self, input_size = (None, 3, 32, 32)):
-        _, c, h, w = input_size
-        trans =  [Resize((h, w)), ToTensor()]
-        trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
-                            (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+    def _transform(self, input_size = (None, 3, 32, 32), trans = None):
+        if trans is None:
+            _, c, h, w = input_size
+            trans =  [Resize((h, w)), ToTensor()]
+            trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
+                                (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+            
         self.transform = Compose(trans)
         
 
@@ -79,12 +82,6 @@ class ImageDataModule:
         self.valid_loader = DataLoader(self.valid_set, batch_size=self.batch_size,num_workers = self.num_workers,  shuffle=False)
         self.test_loader = DataLoader(self.test_set,  batch_size=self.batch_size, num_workers = self.num_workers, shuffle=False)
 
-    def getTrans(self):
-        return self.transform
-    
-    def setTrans(self, transform):
-        self.transform = transform
-        self._prepare_dataloaders()
     
 
 
@@ -113,7 +110,8 @@ class ImageToyData:
                        input_size = (None, 3, 32, 32), 
                        batch_size = 32,
                        num_workers = 8,
-                       val_ratio = 0.1, test_ratio = 0.1):
+                       trans = None,
+                       valid_split = 0.1, test_split = 0.1):
         self.dataset = dataset 
         self.root_path = root_path
         
@@ -121,17 +119,19 @@ class ImageToyData:
         self.batch_size = batch_size
         self.num_workers = num_workers
         
-        self.val_ratio = val_ratio
-        self.test_ratio = test_ratio
+        self.val_ratio = valid_split
+        self.test_ratio = test_split
         
-        self._transform(input_size)
+        self._transform(input_size, trans)
         self._get_raw_data()
 
-    def _transform(self, input_size = (None, 3, 32, 32)):
-        _, c, h, w = input_size
-        trans =  [Resize((h, w)), ToTensor()]
-        trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
-                            (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+    def _transform(self, input_size = (None, 3, 32, 32), trans = None):
+        if trans is None:
+            _, c, h, w = input_size
+            trans =  [Resize((h, w)), ToTensor()]
+            trans += [Normalize((0.48145466, 0.4578275, 0.40821073), 
+                                (0.26862954, 0.26130258, 0.27577711))] if c == 3 else []
+            
         self.transform = Compose(trans)
         
     def _get_raw_data(self):
