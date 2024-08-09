@@ -40,6 +40,19 @@ class Classifier(nn.Module):
                                                               patience = args.lr_decay_step, 
                                                               threshold = 0.01)
         return self
+
+    def fit(self, epochs):
+        for epoch in range(epochs):
+            epoch_loss, time_cost = self.train_one_epoch()
+            val_loss, preds, reals = self.valid_one_epoch()
+            print(f'[{epoch + 1}/{epochs}]: loss: {epoch_loss:.4f}, vloss: {val_loss:.4f}, time cost: {time_cost:.4f}s')
+        
+        # NOTE 末次调用验证方法会导致 train_eval_time 装饰器里面的上下文管理器关闭梯度, 
+        # NOTE 因而此时必须手动开启, 堪比内存管理一般的易错之处!
+        
+        torch.set_grad_enabled(True) 
+        return self
+        
     
     @TrainTools.train_eval_time
     def train_one_epoch(self, tracker = None):
@@ -87,7 +100,21 @@ class Classifier(nn.Module):
     
     def test_one_epoch(self):
         return self.eval_one_epoch(self.dataM.test_loader)
-                
-    
-  
-    
+class Predictor(torch.nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super(Predictor, self).__init__()
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(input_dim, hidden_dim // 2),
+            torch.nn.LayerNorm(hidden_dim // 2),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim // 2, hidden_dim // 2),
+            torch.nn.LayerNorm(hidden_dim // 2),
+            torch.nn.ReLU(),
+            torch.nn.Linear(hidden_dim // 2, output_dim)
+        )
+
+    def forward(self, x):
+        y = self.mlp(x)
+        return y
+
+

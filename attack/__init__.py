@@ -8,3 +8,5 @@ TODO # 封装 cleverhans/foolbox
     https://github.com/fra31/auto-attack
 
 '''
+
+from .Attacker import ClassifierAttackerFb
