@@ -202,6 +202,11 @@ def _load_imagenette(root):
     
     return ConcatDataset([tset, eset])
 
+def _load_imagenet(root):
+    tset = datasets.ImageFolder(root=os.path.join(root, 'ImageNet/train'))
+    eset = datasets.ImageFolder(root=os.path.join(root, 'ImageNet/val'))
+    
+    return ConcatDataset([tset, eset])
 
 def _load_caltech_101(root):
     dataset = datasets.ImageFolder(root = os.path.join(root, 'caltech/caltech-101'))
